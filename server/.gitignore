@@ -212,14 +212,6 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Streamlit
-.streamlit/secrets.toml
-
-# LangChain
-.langchain/
-
-# Models
-models/
 
 # Documents 
 documents/
