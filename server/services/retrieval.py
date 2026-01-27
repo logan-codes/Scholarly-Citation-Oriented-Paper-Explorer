@@ -13,8 +13,9 @@ embedding_model = SentenceTransformer(model_name="all-MiniLM-L6-v2")
 vector_store = Chroma(
     collection_name="documents",
     embedding_function=embedding_model,
-    persist_directory="./chroma_db"
+    persist_directory="./chroma_db",
 )
+
 
 class RetrievalState(TypedDict):
     query: str
@@ -24,13 +25,12 @@ class RetrievalState(TypedDict):
     retrieved_chunks: List[Document]
     documents: Dict[str, List[Document]]
 
+
 def initial_retrieval(state: RetrievalState):
     """Initial vector search"""
-    chunks = vector_store.similarity_search(
-        state["query"],
-        state["k"]
-    )
+    chunks = vector_store.similarity_search(state["query"], state["k"])
     return {"retrieved_chunks": chunks}
+
 
 def expand_k(state: RetrievalState):
     """
@@ -40,14 +40,13 @@ def expand_k(state: RetrievalState):
     expanded = state["k"] + 25
     return {"expanded_k": expanded}
 
+
 def expanded_retrieval(state: RetrievalState):
     """Second retrieval using expanded query"""
-    new_chunks = vector_store.similarity_search(
-        state["query"],
-        state["expanded_k"]
-    )
+    new_chunks = vector_store.similarity_search(state["query"], state["expanded_k"])
     combined_chunks = state["retrieved_chunks"] + new_chunks
     return {"retrieved_chunks": combined_chunks}
+
 
 def aggregate_documents(state: RetrievalState):
     """
@@ -62,18 +61,17 @@ def aggregate_documents(state: RetrievalState):
 
     return {"documents": doc_map}
 
+
 def should_expand(state: RetrievalState) -> str:
     """
     Decide whether query expansion is needed.
     """
-    unique_docs = {
-        chunk.metadata.get("doc_id")
-        for chunk in state["retrieved_chunks"]
-    }
+    unique_docs = {chunk.metadata.get("doc_id") for chunk in state["retrieved_chunks"]}
 
     if len(unique_docs) < state["k_docs"]:
         return "expand"
     return "enough"
+
 
 graph = StateGraph(RetrievalState)
 
@@ -90,7 +88,7 @@ graph.add_conditional_edges(
     {
         "expand": "expand_k",
         "enough": "aggregate_documents",
-    }
+    },
 )
 
 graph.add_edge("expand_k", "expanded_retrieval")
@@ -100,13 +98,14 @@ graph.add_conditional_edges(
     {
         "expand": "expand_k",
         "enough": "aggregate_documents",
-    }
+    },
 )
 graph.add_edge("aggregate_documents", END)
 
 retrieval_graph = graph.compile()
 
-def retrieval_service(query:str,k_docs:int=50, k_chunks:int=250):
+
+def retrieval_service(query: str, k_docs: int = 50, k_chunks: int = 250):
     """
     Retrieval Service
 
@@ -114,22 +113,15 @@ def retrieval_service(query:str,k_docs:int=50, k_chunks:int=250):
     """
 
     # Invoke the LangGraph retrieval workflow
-    result = retrieval_graph.invoke({
-        "query": query,
-        "k": k_chunks,
-        "k_docs": k_docs
-    })
+    result = retrieval_graph.invoke({"query": query, "k": k_chunks, "k_docs": k_docs})
 
     documents = result["documents"]
 
     # Rank documents by number of relevant chunks
-    ranked_docs = sorted(
-        documents.items(),
-        key=lambda x: len(x[1]),
-        reverse=True
-    )
+    ranked_docs = sorted(documents.items(), key=lambda x: len(x[1]), reverse=True)
 
     return ranked_docs[:k_docs]
+
 
 if __name__ == "__main__":
     query = "graph neural networks for citation analysis"
