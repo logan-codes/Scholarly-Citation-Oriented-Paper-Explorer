@@ -1,13 +1,13 @@
 from typing import List, Dict, TypedDict
 from collections import defaultdict
 
-from langgraph_sdk.schema import Document
-from langchain_core.vectorstores import Chroma
-from langchain_core.embeddings import SentenceTransformerEmbeddings
+from langchain_core.documents import Document
+from langchain_chroma import Chroma
+from sentence_transformers import SentenceTransformer
 from langgraph.graph import StateGraph, END
 
 # Initialize the embedding model
-embedding_model = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+embedding_model = SentenceTransformer(model_name="all-MiniLM-L6-v2")
 
 # Connect to the Chroma vector store
 vector_store = Chroma(
@@ -20,6 +20,7 @@ class RetrievalState(TypedDict):
     query: str
     k: int
     expanded_k: int
+    k_docs: int
     retrieved_chunks: List[Document]
     documents: Dict[str, List[Document]]
 
@@ -61,7 +62,7 @@ def aggregate_documents(state: RetrievalState):
 
     return {"documents": doc_map}
 
-def should_expand(state: RetrievalState, k_docs) -> str:
+def should_expand(state: RetrievalState) -> str:
     """
     Decide whether query expansion is needed.
     """
@@ -70,7 +71,7 @@ def should_expand(state: RetrievalState, k_docs) -> str:
         for chunk in state["retrieved_chunks"]
     }
 
-    if len(unique_docs) < k_docs:
+    if len(unique_docs) < state["k_docs"]:
         return "expand"
     return "enough"
 
