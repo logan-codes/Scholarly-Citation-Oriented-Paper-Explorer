@@ -1,0 +1,17 @@
+# boiler plate gitignore file
+*.pyc
+__pycache__/
+.env
+.vscode/
+.idea/
+.DS_Store
+logs/
+database/
+*.log
+*.sqlite3
+temp/
+tmp/
+coverage/
+dist/
+build/
+*.egg-info/
