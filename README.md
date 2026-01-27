@@ -20,3 +20,4 @@ This project aims to reduce the literature survery time and increase its quality
   - Docling
   - FastAPI
   - NetworkX
+  lokiii 
