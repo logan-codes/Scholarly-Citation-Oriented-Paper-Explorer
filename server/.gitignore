@@ -215,3 +215,6 @@ __marimo__/
 
 # Documents 
 documents/
+
+# Chroma
+.chroma/
