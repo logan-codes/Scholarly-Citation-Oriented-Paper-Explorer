@@ -21,6 +21,6 @@ async def search(query: str):
     """
 
     # Call the retrieval service
-    results = retrieval_service(query)
+    results = retrieval_service(query, k_chunks=5, k_docs=3)
 
     return results

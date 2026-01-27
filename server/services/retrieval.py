@@ -117,6 +117,7 @@ def retrieval_service(query:str,k_docs:int=50, k_chunks:int=250):
     result = retrieval_graph.invoke({
         "query": query,
         "k": k_chunks,
+        "k_docs": k_docs
     })
 
     documents = result["documents"]
