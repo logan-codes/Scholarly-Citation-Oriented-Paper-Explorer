@@ -1,1 +1,5 @@
 fastapi==0.128.0
+langchain_chroma==1.1.0
+langchain_core==1.2.7
+langgraph==1.0.7
+sentence_transformers==5.2.2
