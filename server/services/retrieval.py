@@ -5,15 +5,20 @@ from langchain_core.documents import Document
 from langchain_chroma import Chroma
 from sentence_transformers import SentenceTransformer
 from langgraph.graph import StateGraph, END
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
 
 # Initialize the embedding model
-embedding_model = SentenceTransformer(model_name="all-MiniLM-L6-v2")
+embedding_model = SentenceTransformer(model_name_or_path="all-MiniLM-L6-v2")
 
 # Connect to the Chroma vector store
 vector_store = Chroma(
     collection_name="documents",
     embedding_function=embedding_model,
-    persist_directory="./chroma_db",
+    persist_directory=os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
 )
 
 

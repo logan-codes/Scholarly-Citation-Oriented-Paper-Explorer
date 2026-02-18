@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Dict, Optional
 
 import networkx as nx
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 
 class CitationNetwork:
