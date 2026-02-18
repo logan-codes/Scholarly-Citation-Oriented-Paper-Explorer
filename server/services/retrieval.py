@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
-from sentence_transformers import SentenceTransformer
+from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.graph import StateGraph, END
 from dotenv import load_dotenv
 import os
@@ -12,7 +12,7 @@ import os
 load_dotenv()
 
 # Initialize the embedding model
-embedding_model = SentenceTransformer(model_name_or_path="all-MiniLM-L6-v2")
+embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 # Connect to the Chroma vector store
 vector_store = Chroma(
