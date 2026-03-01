@@ -15,3 +15,12 @@ coverage/
 dist/
 build/
 *.egg-info/
+
+# pytest cache
+.pytest_cache/
+
+# data folder
+data/
+
+#env files
+.env
