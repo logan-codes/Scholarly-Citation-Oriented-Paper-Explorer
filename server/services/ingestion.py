@@ -1,3 +1,4 @@
+from services.vectorstore import add_chunks
 from docling.document import Document
 
 def build_docling_document(paper):
@@ -61,10 +62,9 @@ def process_paper_with_hybrid_chunking(paper):
     return chunks
 
 def process_query_results(papers):
-    all_chunks = []
-
     for paper in papers:
         chunks = process_paper_with_hybrid_chunking(paper)
-        all_chunks.extend(chunks)
 
-    return all_chunks
+        add_chunks(chunks)   # 🔥 THIS connects to Chroma
+
+    print("Ingestion completed.")
