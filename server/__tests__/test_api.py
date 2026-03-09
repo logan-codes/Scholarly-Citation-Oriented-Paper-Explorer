@@ -12,7 +12,7 @@ async def async_client():
 @pytest.mark.asyncio
 async def test_health_check(async_client):
     """Test the health check endpoint."""
-    response = await async_client.get("/health")
+    response = await async_client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    assert response.json() == {"message": "The server is running."}
 

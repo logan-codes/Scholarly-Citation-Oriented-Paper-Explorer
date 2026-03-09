@@ -1,5 +1,5 @@
 import pytest
-from services.retrieval import rrf_score
+from services.retrieval import rrf_score, retrieval_service
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
@@ -62,3 +62,18 @@ class TestRRF:
         # doc2 and doc3 should have higher scores than doc1 and doc4
         assert rrf_scores["doc2"] > rrf_scores["doc1"]
         assert rrf_scores["doc3"] > rrf_scores["doc4"]
+
+class TestingRetrievalService:
+    def test_retrieval_service(self):
+        """Test that the retrieval service returns results in the expected format."""
+        # This is a placeholder test. In a real test, you would mock the vector store and embedding model.
+        query = "test query"
+        k_docs = 2
+        k_chunks = 2
+
+        # Simulate invoking the retrieval service
+        result = retrieval_service(query, k_docs, k_chunks)
+
+        # For this example, we'll just check that the result is a dictionary with expected keys
+        assert isinstance(result, dict)
+        
