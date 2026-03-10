@@ -2,8 +2,8 @@ import uuid
 from sqlalchemy import ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from papers import Base 
-from papers import Paper
+from .papers import Base 
+from .papers import Paper
 
 class CitationEdge(Base):
     __tablename__ = "citation_edges"

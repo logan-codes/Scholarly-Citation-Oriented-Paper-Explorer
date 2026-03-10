@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Text, Float, TIMESTAMP, func, Index
 from sqlalchemy.orm import Mapped, mapped_column
-from papers import Base 
+from .papers import Base 
 
 class AuthorScore(Base):
     __tablename__ = "author_scores"
