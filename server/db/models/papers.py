@@ -13,13 +13,12 @@ class Paper(Base):
     # Identity
     paper_id:       Mapped[uuid.UUID]   = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     openalex_id:    Mapped[str]         = mapped_column(Text, unique=True, nullable=False)
-    doi:            Mapped[str | None]  = mapped_column(Text, unique=True, nullable=True)
+    doi:            Mapped[str | None]  = mapped_column(Text, unique=True, nullable=False)
 
     # Core metadata
     title:          Mapped[str]         = mapped_column(Text, nullable=False)
     abstract:       Mapped[str | None]  = mapped_column(Text, nullable=True)
     venue:          Mapped[str | None]  = mapped_column(Text, nullable=True)
-    venue_tier:     Mapped[str | None]  = mapped_column(CHAR(2), nullable=True)
     year:           Mapped[int | None]  = mapped_column(Integer, nullable=True)
     fields:         Mapped[list | None] = mapped_column(ARRAY(Text), nullable=True)
 
@@ -39,7 +38,7 @@ class Paper(Base):
 
     # Pipeline flags
     needs_pr:       Mapped[bool]        = mapped_column(Boolean, default=True)
-    is_enriched:    Mapped[bool]        = mapped_column(Boolean, default=False)
+    needs_enrich:    Mapped[bool]        = mapped_column(Boolean, default=True)
 
     # Provenance
     source:         Mapped[str]         = mapped_column(Text, default="openalex")
@@ -51,7 +50,6 @@ class Paper(Base):
 
     __table_args__ = (
         Index("idx_year",           "year"),
-        Index("idx_venue_tier",     "venue_tier"),
         Index("idx_fields",         "fields",           postgresql_using="gin"),
         Index("idx_search_vector",  "search_vector",    postgresql_using="gin"),
         Index("idx_needs_pr",       "needs_pr",         postgresql_where=text("needs_pr = true")),
