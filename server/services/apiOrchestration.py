@@ -1,78 +1,84 @@
+from dotenv import load_dotenv
+load_dotenv()
+import os
+
 import requests
-import feedparser
+from typing import List, Dict
 
-def fetch_arxiv(query, max_results=5):
-    url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}"
+api_key = os.getenv("OPEN_ALEX_API_KEY")
+if not api_key:
+    raise ValueError("OPEN_ALEX_API_KEY not set")
 
-    response = requests.get(url)
-    feed = feedparser.parse(response.text)
+def reconstruct_abstract(index) -> str:
+    if not index:
+        return None
 
-    papers = []
-    for entry in feed.entries:
-        papers.append({
-            "source": "arXiv",
-            "title": entry.title,
-            "authors": [author.name for author in entry.authors],
-            "abstract": entry.summary,
-            "published": entry.published,
-            "pdf_link": entry.link
+    length = max(pos for positions in index.values() for pos in positions) + 1
+    words = [""] * length
+
+    for word, positions in index.items():
+        for pos in positions:
+            words[pos] = word
+
+    return " ".join(words)
+
+def parse_work(work) -> Dict:
+
+    abstract = reconstruct_abstract(work.get("abstract_inverted_index"))
+
+    authors = []
+    for a in work.get("authorships", []):
+        author = a.get("author", {})
+
+        author_id = None
+        if author.get("id"):
+            author_id = author["id"].split("/")[-1]
+
+        authors.append({
+            "name": author.get("display_name"),
+            "openalex_id": author_id,
+            "institution": (
+                a["institutions"][0]["display_name"]
+                if a.get("institutions") else None
+            )
         })
 
-    return papers
+    venue = None
+    if work.get("primary_location") and work["primary_location"].get("source"):
+        venue = work["primary_location"]["source"]["display_name"]
 
+    fields = [c["display_name"] for c in work.get("concepts", [])[:3]]
 
-def fetch_semantic_scholar(query, limit=5):
-    url = "https://api.semanticscholar.org/graph/v1/paper/search"
-
-    params = {
-        "query": query,
-        "limit": limit,
-        "fields": "title,authors,year,abstract,citationCount,doi,url"
+    return {
+        "openalex_id": work["id"].split("/")[-1],
+        "doi": (work.get("doi") or "").replace("https://doi.org/", ""),
+        "title": work.get("display_name"),
+        "abstract": abstract,
+        "authors": authors,
+        "venue": venue,
+        "year": work.get("publication_year"),
+        "fields": fields,
+        "citation_count": work.get("cited_by_count"),
+        "counts_by_year": work.get("counts_by_year"),
+        "referenced_works": [
+            r.split("/")[-1] for r in work.get("referenced_works", [])
+        ],
+        "open_access": work.get("open_access", {}).get("is_oa"),
+        "updated_date": work.get("updated_date")
     }
 
-    response = requests.get(url, params=params)
-    data = response.json()
 
-    papers = []
-    for paper in data.get("data", []):
-        papers.append({
-            "source": "Semantic Scholar",
-            "title": paper.get("title"),
-            "authors": [author["name"] for author in paper.get("authors", [])],
-            "abstract": paper.get("abstract"),
-            "year": paper.get("year"),
-            "citations": paper.get("citationCount"),
-            "doi": paper.get("doi"),
-            "url": paper.get("url")
-        })
+def get_data(pub_year:int , per_pg:int) -> List[Dict]:
+    raw_data = requests.get(
+        f"https://api.openalex.org/works?filter=publication_year:{pub_year}&sort=publication_date:desc&per_page={per_pg}&cursor=*&api_key={api_key}"
+    , timeout=10).json()
+    
+    parsed_opt=[]
+    for work in raw_data["results"]:
+        parsed=parse_work(work)
+        parsed_opt.append(parsed)
+    
+    return parsed_opt
 
-    return papers
-
-def fetch_core(query, api_key, limit=5):
-    url = "https://api.core.ac.uk/v3/search/works"
-
-    headers = {
-        "Authorization": f"Bearer {api_key}"
-    }
-
-    data = {
-        "q": query,
-        "limit": limit
-    }
-
-    response = requests.post(url, headers=headers, json=data)
-    results = response.json()
-
-    papers = []
-    for paper in results.get("results", []):
-        papers.append({
-            "source": "CORE",
-            "title": paper.get("title"),
-            "authors": paper.get("authors"),
-            "abstract": paper.get("abstract"),
-            "year": paper.get("yearPublished"),
-            "doi": paper.get("doi"),
-            "url": paper.get("downloadUrl")
-        })
-
-    return papers
+if __name__ == "__main__":
+    print(get_data(2026,5))
