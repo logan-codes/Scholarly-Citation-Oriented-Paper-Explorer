@@ -1,53 +1,15 @@
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from services.apiOrchestration import fetch_arxiv, fetch_semantic_scholar, fetch_core
-from dotenv import load_dotenv
-import os
+from services.apiOrchestration import get_data
 
-load_dotenv()
-
-@pytest.mark.asyncio
-async def test_fetch_arxiv():
-    """Test fetching papers from arXiv."""
-    papers = fetch_arxiv("machine learning", max_results=2)
-    assert len(papers) == 2
-    for paper in papers:
-        assert paper["source"] == "arXiv"
-        assert "title" in paper
-        assert "authors" in paper
-        assert "abstract" in paper
-        assert "published" in paper
-        assert "pdf_link" in paper
-
-@pytest.mark.asyncio
-async def test_fetch_semantic_scholar():
-    """Test fetching papers from Semantic Scholar."""
-    papers = fetch_semantic_scholar("deep learning", limit=2)
-    assert len(papers) == 2
-    for paper in papers:
-        assert paper["source"] == "Semantic Scholar"
-        assert "title" in paper
-        assert "authors" in paper
-        assert "abstract" in paper
-        assert "year" in paper
-        assert "citations" in paper
-        assert "doi" in paper
-        assert "url" in paper
-
-@pytest.mark.asyncio
-async def test_fetch_core():
-    """Test fetching papers from CORE."""
-    api_key= os.getenv("CORE_API_KEY")
-    if not api_key:
-        pytest.skip("CORE API key not set in environment variables.")
-    papers = fetch_core("artificial intelligence", api_key=api_key, limit=2)
-    assert len(papers) == 2
-    for paper in papers:
-        assert paper["source"] == "CORE"
-        assert "title" in paper
-        assert "authors" in paper
-        assert "abstract" in paper
-        assert "year" in paper
-        assert "doi" in paper
-        assert "url" in paper
+def test_get_data():
+    res = get_data(2026, 5)
+    assert isinstance(res, list)
+    assert len(res) == 5
+    if res:
+        # Check that each item is a dict with expected keys
+        expected_keys = ["openalex_id", "doi", "title", "abstract", "authors", "venue", "year", "fields", "citation_count", "counts_by_year", "referenced_works", "open_access", "updated_date"]
+        for item in res:
+            assert isinstance(item, dict)
+            for key in expected_keys:
+                assert key in item
+    
