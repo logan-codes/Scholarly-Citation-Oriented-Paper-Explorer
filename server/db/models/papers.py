@@ -13,7 +13,7 @@ class Paper(Base):
     # Identity
     paper_id:       Mapped[uuid.UUID]   = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     openalex_id:    Mapped[str]         = mapped_column(Text, unique=True, nullable=False)
-    doi:            Mapped[str | None]  = mapped_column(Text, unique=True, nullable=False)
+    doi:            Mapped[str | None]  = mapped_column(Text, unique=True, nullable=True)
 
     # Core metadata
     title:          Mapped[str]         = mapped_column(Text, nullable=False)

@@ -1,0 +1,20 @@
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    # Postgres
+    POSTGRES_URL: str
+
+    # Qdrant
+    QDRANT_URL: str
+    QDRANT_COLLECTION_NAME: str
+
+    # OpenAlex
+    OPENALEX_BASE_URL: str
+
+    # Groq
+    GROQ_API_KEY: str
+
+    class Config:
+        env_file=".env"
+
+settings= Settings()

@@ -1,15 +1,10 @@
-from dotenv import load_dotenv
-load_dotenv()
-import os
-
+from core.config import settings
 import requests
 from typing import List, Dict
 
-api_key = os.getenv("OPEN_ALEX_API_KEY")
-if not api_key:
-    raise ValueError("OPEN_ALEX_API_KEY not set")
+api_key = settings.OPENALEX_API_KEY
 
-def reconstruct_abstract(index) -> str:
+def _reconstruct_abstract(index) -> str:
     if not index:
         return None
 
@@ -22,9 +17,9 @@ def reconstruct_abstract(index) -> str:
 
     return " ".join(words)
 
-def parse_work(work) -> Dict:
+def _parse_work(work) -> Dict:
 
-    abstract = reconstruct_abstract(work.get("abstract_inverted_index"))
+    abstract = _reconstruct_abstract(work.get("abstract_inverted_index"))
 
     authors = []
     for a in work.get("authorships", []):
@@ -75,10 +70,12 @@ def get_data(pub_year:int , per_pg:int) -> List[Dict]:
     
     parsed_opt=[]
     for work in raw_data["results"]:
-        parsed=parse_work(work)
+        parsed=_parse_work(work)
         parsed_opt.append(parsed)
     
     return parsed_opt
 
+# use case
 if __name__ == "__main__":
-    print(get_data(2026,5))
+    opt=get_data(2026, 2)
+    print(opt[0])
