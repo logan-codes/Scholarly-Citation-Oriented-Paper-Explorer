@@ -9,14 +9,14 @@ from db.qdrant_db import QdrantDB
 async def lifespan(app: FastAPI):
     print("Starting application...")
     
-    # init_db()
-    # qdrant = QdrantDB()
-    # qdrant.create_collection()
+    init_db()
+    qdrant = QdrantDB()
+    qdrant.create_collection()
     
     yield
     
-    # clear_db()
-    # qdrant.delete_collection()
+    clear_db()
+    qdrant.delete_collection()
     # shutdown logic
     print("Shutting down application...")
 app = FastAPI(lifespan=lifespan)

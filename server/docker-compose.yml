@@ -2,6 +2,25 @@ version: "1.0"
 
 services:
 
+  server:
+    build: .
+    container_name: scope-server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://admin:admin123@postgres:5432/appdb
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_URL=http://qdrant:6333
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    volumes:
+      - ./app.log:/app/app.log
+    env_file:
+      - .env
+
   postgres:
     image: postgres:16
     container_name: postgres-db-scope
@@ -14,17 +33,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7
-    container_name: redis-cache-scope
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
-
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant-db-scope
@@ -34,6 +42,15 @@ services:
       - "6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
+  redis:
+    image: redis:7
+    container_name: redis-cache-scope
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
 
 volumes:
   postgres_data:
