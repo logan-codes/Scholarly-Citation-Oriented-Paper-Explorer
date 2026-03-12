@@ -6,11 +6,11 @@ from qdrant_client.models import (
     VectorParams,
     Distance,
     PointStruct,
-    SearchParams,
     Prefetch,
     FusionQuery,
-    FusionParams,
+    Fusion
 )
+
 
 from typing import List, Dict, Any
 
@@ -23,11 +23,10 @@ CONTRIBUTION_DIM = 768
 class QdrantDB:
     def __init__(self):
         self.client = QdrantClient(url=settings.QDRANT_URL)
-        self.create_collection()
 
     # Collection Setup
     def create_collection(self):
-        self.client.recreate_collection(
+        self.client.create_collection(
             collection_name=settings.QDRANT_COLLECTION_NAME,
             vectors_config={
                 "title": VectorParams(size=TITLE_DIM, distance=Distance.COSINE),
@@ -35,6 +34,9 @@ class QdrantDB:
                 "contribution": VectorParams(size=CONTRIBUTION_DIM, distance=Distance.COSINE),
             },
         )
+    
+    def delete_collection(self):
+        self.client.delete_collection(collection_name=settings.QDRANT_COLLECTION_NAME)
 
     # Insert Paper
     def upsert_paper(
@@ -73,7 +75,8 @@ class QdrantDB:
         try:
             results = self.client.query_points(
                 collection_name=settings.QDRANT_COLLECTION_NAME,
-                query_vectors=self._build_rrf_query(query_vectors),
+                prefetch=self._build_prefetches(query_vectors),
+                query=FusionQuery(fusion=Fusion.RRF),
                 limit=limit,
                 with_payload=True,
             )
@@ -83,19 +86,17 @@ class QdrantDB:
                     "score": hit.score,
                     "payload": hit.payload,
                 }
-                for hit in results
+                for hit in results.points
             ]
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
             return []
 
-    def _build_rrf_query(
+    def _build_prefetches(
         self,
         query_vectors: Dict[str, List[float]],
-    ) -> FusionQuery:
-        return FusionQuery(
-            fusion=FusionParams(fusion=2),
-            prefetch=[
+    ):
+        return [
                 Prefetch(
                     query=query_vectors.get("title", []),
                     using="title",
@@ -111,8 +112,7 @@ class QdrantDB:
                     using="contribution",
                     limit=50,
                 ),
-            ],
-        )
+            ]
 
     def search_with_filter(
         self,
@@ -123,7 +123,7 @@ class QdrantDB:
         try:
             results = self.client.query_points(
                 collection_name=settings.QDRANT_COLLECTION_NAME,
-                query_vector=self._build_rrf_query(query_vectors),
+                query=self._build_rrf_query(query_vectors),
                 query_filter=filter_query,
                 limit=limit,
                 with_payload=True,

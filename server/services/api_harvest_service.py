@@ -2,7 +2,7 @@ from core.config import settings
 import requests
 from typing import List, Dict
 
-api_key = settings.OPENALEX_API_KEY
+api_key = settings.OPEN_ALEX_API_KEY
 
 def _reconstruct_abstract(index) -> str:
     if not index:

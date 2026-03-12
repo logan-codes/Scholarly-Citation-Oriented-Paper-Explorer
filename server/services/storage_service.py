@@ -1,19 +1,19 @@
 from core.logger import logger
 
-from server.services.enrich_service import enrich_batch
-from server.services.api_harvest_service import get_data
-from server.services.pagerank_service import update_global_pr, update_citation_velocity
+from services.enrich_service import enrich_batch
+from services.api_harvest_service import get_data
+from services.pagerank_service import update_global_pr, update_citation_velocity
 
 from db.repo.papers import PaperRepository
 from db.repo.citation_edges import CitationEdgeRepository
 from db.repo.author_scores import AuthorScoreRepository
 from db.postgres_db import SessionLocal
-from server.db.qdrant_db import QdrantDB
+from db.qdrant_db import QdrantDB
 from db.models.citation_edges import CitationEdge
 from db.models.author_scores import AuthorScore
 
-from server.utils.embedding_util import embed_abstracts, embed_contributions, embed_titles
-from server.utils.llm_util import get_groq_llm
+from utils.embedding_util import embed_abstracts, embed_contributions, embed_titles
+from utils.llm_util import get_groq_llm
 
 # Store raw data in Postgres
 def store_postgres(papers: list[dict]) -> list[str]:
@@ -30,7 +30,7 @@ def store_postgres(papers: list[dict]) -> list[str]:
             openalex_id = paper["openalex_id"]
 
             # Skip if already ingested 
-            existing = paper_repo.get_by_id(openalex_id)
+            existing = paper_repo.get_by_oa_id(str(openalex_id))
             if existing:
                 logger.debug("Skipping duplicate: %s", openalex_id)
                 continue
@@ -53,7 +53,7 @@ def store_postgres(papers: list[dict]) -> list[str]:
                 # Citation edges (citing → referenced) 
                 for ref_id in paper.get("referenced_works", []):
                     # Only create edge if the referenced paper also exists
-                    ref_paper = paper_repo.get_by_id(ref_id)
+                    ref_paper = paper_repo.get_by_oa_id(ref_id)
                     if ref_paper:
                         edge = CitationEdge(
                             citing_id=paper_row.paper_id,
@@ -94,10 +94,10 @@ def enrich():
         papers_to_enrich = paper_repo.get_all_need_enrich()
 
         if not papers_to_enrich:
-            logger.info("Phase 4 ▸ No papers need enrichment — skipping")
+            logger.info("No papers need enrichment — skipping")
             return
 
-        logger.info("Phase 4 ▸ Enriching %d papers", len(papers_to_enrich))
+        logger.info("Enriching %d papers", len(papers_to_enrich))
 
         # Build the batch input expected by enrich_batch
         batch_input = [
@@ -163,7 +163,7 @@ def store_qdrant(enrichment_results: list | None = None):
         paper_rows    = []
 
         for oa_id in oa_ids:
-            paper = paper_repo.get_by_id(oa_id)
+            paper = paper_repo.get_by_oa_id(oa_id)
             if not paper:
                 logger.warning("Paper %s not found in DB — skipping Qdrant upsert", oa_id)
                 continue
@@ -180,7 +180,7 @@ def store_qdrant(enrichment_results: list | None = None):
                 contributions.append(paper.abstract or paper.title or "")
 
         if not paper_rows:
-            logger.info("Phase 5 ▸ No valid papers found — skipping")
+            logger.info("No valid papers found — skipping")
             return
 
         # Batch embed
@@ -234,6 +234,7 @@ def storage_service(pub_year: int = 2026, per_page: int = 50):
     store_qdrant(enrichment_results)
 
     logger.info("Storage complete")
+    return papers
 
 # Usage
 if __name__ == "__main__":

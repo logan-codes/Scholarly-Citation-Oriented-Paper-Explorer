@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
-
+from uuid import UUID
 
 class SearchRequest(BaseModel):
     query: str
@@ -8,7 +8,7 @@ class SearchRequest(BaseModel):
 
 
 class SearchResult(BaseModel):
-    paper_id: int
+    paper_id: UUID
     openalex_id: str
     title: str
     abstract: Optional[str] = None

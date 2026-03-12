@@ -16,7 +16,10 @@ class PaperRepository:
         return self.db.query(Paper).filter(Paper.needs_enrich == True).all()
 
     def get_by_id(self, paper_id: str) -> Optional[Paper]:
-        return self.db.query(Paper).filter(Paper.openalex_id == paper_id).first()
+        return self.db.query(Paper).filter(Paper.paper_id == paper_id).first()
+
+    def get_by_oa_id(self, oa_id: str) -> Optional[Paper]:
+        return self.db.query(Paper).filter(Paper.openalex_id == oa_id).first()
 
     def insert(self, paper_data: dict) -> Paper:
         paper = Paper(**paper_data)
@@ -27,7 +30,7 @@ class PaperRepository:
         return paper
 
     def update_by_id(self, paper_id: str, updates: dict) -> Optional[Paper]:
-        paper = self.get_by_id(paper_id)
+        paper = self.get_by_oa_id(paper_id)
         if not paper:
             return None
         for key, value in updates.items():
@@ -83,7 +86,7 @@ class PaperRepository:
             result = self.db.execute(stmt)
 
             return [
-                {"id": row.paper_id, "score": row.bm25_score}
+                {"id": row.openalex_id, "score": row.bm25_score}
                 for row in result
             ]
 

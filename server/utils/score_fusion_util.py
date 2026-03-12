@@ -93,7 +93,7 @@ def fuse_results(
 
     final_results = []
     for doc_id, base_score in fused:
-        paper_id = int(doc_id)
+        paper_id = doc_id
         
         pr = pr_scores.get(doc_id, 0)
         vel = velocity_scores.get(doc_id, 0)

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION_NAME: str
 
     # OpenAlex
-    OPENALEX_BASE_URL: str
+    OPEN_ALEX_API_KEY: str
 
     # Groq
     GROQ_API_KEY: str

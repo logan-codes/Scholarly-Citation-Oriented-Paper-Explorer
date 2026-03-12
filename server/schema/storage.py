@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List, Dict
 
 class StorageRequest(BaseModel):
     year :int
@@ -9,6 +10,7 @@ class ErrorResponse(BaseModel):
     message: str
     details: dict | None = None  
 
-class SuccessfulResponse:
+class SuccessfulResponse(BaseModel):
     ingested: int
+    papers: List[Dict]
     

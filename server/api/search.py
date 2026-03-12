@@ -1,6 +1,6 @@
 from schema.search import SearchRequest, SearchResponse, SearchResult
-from server.core.logger import logger
-from server.services.search_service import search_service
+from core.logger import logger
+from services.search_service import search_service
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/search")
