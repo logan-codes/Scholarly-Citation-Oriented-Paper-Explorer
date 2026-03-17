@@ -25,16 +25,16 @@ def get_specter2():
     return _specter2_model
 
 
-def embed_titles(titles: list[str]) -> list[list[float]]:
-    return get_minilm().encode(titles, batch_size=EMBED_BATCH_SIZE).tolist()
+def embed_title(title: str) -> list[float]:
+    return get_minilm().encode([title])[0].tolist()
 
 
-def embed_abstracts(abstracts: list[str]) -> list[list[float]]:
-    return get_specter2().encode(abstracts, batch_size=EMBED_BATCH_SIZE).tolist()
+def embed_abstract(abstract: str) -> list[float]:
+    return get_specter2().encode([abstract])[0].tolist()
 
 
-def embed_contributions(contributions: list[str]) -> list[list[float]]:
-    return get_specter2().encode(contributions, batch_size=EMBED_BATCH_SIZE).tolist()
+def embed_contribution(contribution: str) -> list[float]:
+    return get_specter2().encode([contribution])[0].tolist()
 
 
 def embed_query(query: str) -> dict[str, list[float]]:

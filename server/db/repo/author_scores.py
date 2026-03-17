@@ -33,11 +33,18 @@ class AuthorScoreRepository:
     def upsert(self, author_score: AuthorScore) -> AuthorScore:
         existing = self.get_by_author_id(author_score.openalex_author_id)
         if existing:
-            updates = {
-                col: getattr(author_score, col)
-                for col in author_score.__table__.columns.keys()
-                if col != "author_id" and col != "updated_at"
-            }
+            updates = {}
+
+            for col in author_score.__table__.columns.keys():
+                if col in ("author_id", "updated_at"):
+                    continue
+
+                value = getattr(author_score, col)
+
+                if value is not None:
+                    updates[col] = value
+                else:
+                    updates[col] = 0.0
             return self.update_by_author_id(author_score.openalex_author_id, updates)
         return self.insert(author_score)
 

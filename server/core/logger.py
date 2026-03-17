@@ -1,10 +1,37 @@
 import logging
 
-logging.basicConfig(level=logging.INFO,filename="app.log")
-logger = logging.getLogger(__name__)
+class StringFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        timestamp = self.formatTime(record, "%Y-%m-%d %H:%M:%S")
 
-# Silence noisy libraries
-logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
+        data = (
+            f"level:{record.levelname.lower()}"
+            f"|message:{record.getMessage()}"
+            f"|logger:{record.name}"
+            f"|timestamp:{timestamp}"
+        )
+
+        if record.exc_info:
+            data += f"|exception:{self.formatException(record.exc_info)}"
+
+        return data
+    
+
+def get_logger(name: str) -> logging.Logger:
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(StringFormatter())
+        file_handler = logging.FileHandler("app.log")
+        file_handler.setFormatter(StringFormatter())
+        logger.addHandler(handler)
+        logger.addHandler(file_handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+    return logger
+
+
+logger = get_logger("app")
+
+for noisy in ["sqlalchemy.engine", "httpx", "sentence_transformers", "urllib3", "boto3", "botocore", "openai"]:
+    logging.getLogger(noisy).setLevel(logging.WARNING)

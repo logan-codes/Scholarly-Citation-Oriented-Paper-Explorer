@@ -8,20 +8,20 @@ class CitationEdgeRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_by_citing_id(self, paper_id: str) -> Optional[CitationEdge]:
-        return self.db.query(CitationEdge).filter(CitationEdge.citing_id == paper_id).first()
+    def get_by_citing_id(self, openalex_id: str) -> Optional[CitationEdge]:
+        return self.db.query(CitationEdge).filter(CitationEdge.citing_id == openalex_id).first()
     
-    def get_by_cited_id(self, paper_id: str) -> Optional[CitationEdge]:
-        return self.db.query(CitationEdge).filter(CitationEdge.cited_id == paper_id).first()
+    def get_by_cited_id(self, openalex_id: str) -> Optional[CitationEdge]:
+        return self.db.query(CitationEdge).filter(CitationEdge.cited_id == openalex_id).first()
 
     def get_all(self) -> list[CitationEdge]:
         return self.db.query(CitationEdge).all()
 
-    def insert(self, citation_score: CitationEdge) -> CitationEdge:
-        self.db.add(citation_score)
+    def insert(self, citation_edge: CitationEdge) -> CitationEdge:
+        self.db.add(citation_edge)
         self.db.commit()
-        self.db.refresh(citation_score)
-        return citation_score
+        self.db.refresh(citation_edge)
+        return citation_edge
 
     def update_by_citing_id(self, paper_id: str, updates: dict) -> Optional[CitationEdge]:
         record = self.get_by_citing_id(paper_id)
@@ -49,7 +49,7 @@ class CitationEdgeRepository:
             updates = {
                 col: getattr(citation_score, col)
                 for col in citation_score.__table__.columns.keys()
-                if col != "citing_id"
+                if col not in ("citing_id", "id")
             }
             return self.update_by_citing_id(citation_score.citing_id, updates)
         return self.insert(citation_score)
@@ -60,7 +60,7 @@ class CitationEdgeRepository:
             updates = {
                 col: getattr(citation_score, col)
                 for col in citation_score.__table__.columns.keys()
-                if col != "cited_id"
+                if col not in ("cited_id", "id")
             }
             return self.update_by_cited_id(citation_score.cited_id, updates)
         return self.insert(citation_score)

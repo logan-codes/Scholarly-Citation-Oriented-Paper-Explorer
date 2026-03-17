@@ -11,19 +11,18 @@ class Paper(Base):
     __tablename__ = "papers"
 
     # Identity
-    paper_id:       Mapped[uuid.UUID]   = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    openalex_id:    Mapped[str]         = mapped_column(Text, unique=True, nullable=False)
-    doi:            Mapped[str | None]  = mapped_column(Text, unique=True, nullable=True)
+    openalex_id:Mapped[str] = mapped_column(Text, unique=True, nullable=False, primary_key=True)
+    doi:Mapped[str | None] = mapped_column(Text, unique=True, nullable=True)
 
     # Core metadata
-    title:          Mapped[str]         = mapped_column(Text, nullable=False)
-    abstract:       Mapped[str | None]  = mapped_column(Text, nullable=True)
-    venue:          Mapped[str | None]  = mapped_column(Text, nullable=True)
-    year:           Mapped[int | None]  = mapped_column(Integer, nullable=True)
-    fields:         Mapped[list | None] = mapped_column(ARRAY(Text), nullable=True)
+    title:Mapped[str] = mapped_column(Text, nullable=False)
+    abstract:Mapped[str | None] = mapped_column(Text, nullable=True)
+    venue:Mapped[str | None]  = mapped_column(Text, nullable=True)
+    year:Mapped[int | None]  = mapped_column(Integer, nullable=True)
+    fields:Mapped[list | None] = mapped_column(ARRAY(Text), nullable=True)
 
     # Authors
-    authors:        Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    authors:Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Citation signals
     citation_count: Mapped[int]         = mapped_column(Integer, default=0)
@@ -38,6 +37,7 @@ class Paper(Base):
 
     # Pipeline flags
     needs_pr:       Mapped[bool]        = mapped_column(Boolean, default=True)
+    needs_vel:       Mapped[bool]        = mapped_column(Boolean, default=True)
     needs_enrich:    Mapped[bool]        = mapped_column(Boolean, default=True)
 
     # Provenance

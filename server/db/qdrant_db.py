@@ -13,6 +13,7 @@ from qdrant_client.models import (
 
 
 from typing import List, Dict, Any
+import uuid
 
 
 TITLE_DIM = 384
@@ -49,16 +50,18 @@ class QdrantDB:
     ):
 
         point = PointStruct(
-            id=paper_id,
+            id= str(uuid.uuid5(uuid.NAMESPACE_DNS, paper_id)),
             vector={
                 "title": title_vector,
                 "abstract": abstract_vector,
                 "contribution": contribution_vector,
             },
             payload={
-                "year":payload.year,
-                "fields":payload.fields,
-                "open access":payload.open_access 
+                "paper id":paper_id,
+                "contribution":payload["contribution"],
+                "year":payload["year"],
+                "fields":payload["fields"],
+                "open access":payload["open_access"] 
             },
         )
 
@@ -80,6 +83,7 @@ class QdrantDB:
                 limit=limit,
                 with_payload=True,
             )
+            print(results)
             return [
                 {
                     "id": hit.id,

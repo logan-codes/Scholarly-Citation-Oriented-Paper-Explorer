@@ -4,6 +4,7 @@ from typing import List, Dict
 class StorageRequest(BaseModel):
     year :int
     per_page: int
+    limit: int
 
 class ErrorResponse(BaseModel):
     error_code: str
@@ -12,5 +13,3 @@ class ErrorResponse(BaseModel):
 
 class SuccessfulResponse(BaseModel):
     ingested: int
-    papers: List[Dict]
-    

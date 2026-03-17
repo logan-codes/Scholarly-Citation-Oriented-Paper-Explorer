@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import List, Optional
-from uuid import UUID
 
 class SearchRequest(BaseModel):
     query: str
@@ -8,18 +7,21 @@ class SearchRequest(BaseModel):
 
 
 class SearchResult(BaseModel):
-    paper_id: UUID
     openalex_id: str
     title: str
     abstract: Optional[str] = None
     venue: Optional[str] = None
     year: Optional[int] = None
+    fields: Optional[str] = None
+    authors: Optional[str] = None
     citation_count: Optional[int] = 0
-    pr_score: float = 0.0
-    velocity_score: float = 0.0
     tags: List[str] = []
     contribution: str = ""
-    score: float = 0.0
+    relevancy_score:float = 0.0
+    B25_score: float = 0.0
+    pr_score: float = 0.0
+    velocity_score: float = 0.0
+    final_score: float = 0.0
 
 
 class SearchResponse(BaseModel):

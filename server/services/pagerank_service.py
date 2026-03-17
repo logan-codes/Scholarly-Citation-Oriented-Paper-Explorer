@@ -103,7 +103,7 @@ def calculate_citation_velocity() -> list[list]:
     session = SessionLocal()
     try:
         paper_repo = PaperRepository(session)
-        papers = paper_repo.get_all_need_pr()  # papers that still need ranking updates
+        papers = paper_repo.get_all_need_vel()  # papers that still need ranking updates
 
         results = []
         for paper in papers:
@@ -114,7 +114,7 @@ def calculate_citation_velocity() -> list[list]:
             else:
                 velocity = _weighted_slope(counts)
 
-            results.append([paper.paper_id, velocity])
+            results.append([paper.openalex_id, velocity])
 
         logger.info("Calculated citation velocity for %d papers", len(results))
         return results

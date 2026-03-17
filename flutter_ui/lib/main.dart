@@ -196,7 +196,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<String> _sortOptions = ['Relevance', 'Trust Score', 'Most Cited', 'Newest'];
 
-  Future<void> searchPapers(String query, {int limit = 10}) async {
+  Future<void> searchPapers(String query, {int limit = 100}) async {
     if (query.trim().isEmpty) return;
 
     setState(() {

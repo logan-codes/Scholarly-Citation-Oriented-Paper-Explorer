@@ -1,5 +1,4 @@
-from core.logger import logger
-
+from core.logger import get_logger
 from typing import List, Dict, Any, Optional
 from sqlalchemy import text
 
@@ -10,6 +9,8 @@ from db.repo.papers import PaperRepository
 from db.models.papers import Paper
 from utils.score_fusion_util import fuse_results
 
+logger = get_logger(__name__)
+
 DEFAULT_LIMIT = 20
 DEFAULT_VECTOR_LIMIT = 100
 DEFAULT_KEYWORD_LIMIT = 100
@@ -18,7 +19,7 @@ def search_service(
     query: str,
     limit: int = DEFAULT_LIMIT,
 ) -> List[Dict[str, Any]]:
-    logger.info(f"Starting search pipeline for query: {query[:50]}")
+    logger.info(f"Starting search pipeline for query: {query[:50]}...")
 
     query_vectors = embed_query(query)
     logger.info("Query embedded")
@@ -29,8 +30,8 @@ def search_service(
         limit=DEFAULT_VECTOR_LIMIT,
     )
     logger.info(f"Vector search returned {len(vector_results)} results")
-
-    vector_candidate_ids = [r["id"] for r in vector_results]
+    vector_candidate_ids = [r["payload"]["paper id"] for r in vector_results]
+    
     session = SessionLocal()
     with session:
         paper_repo = PaperRepository(session)
@@ -41,7 +42,7 @@ def search_service(
     logger.info(f"Keyword search returned {len(keyword_results)} results")
 
     all_paper_ids = list(set(
-        [r["id"] for r in vector_results] + [r["id"] for r in keyword_results]
+        [r for r in vector_candidate_ids] + [r["openalex_id"] for r in keyword_results]
     ))
 
     pr_scores, velocity_scores = _fetch_scores(all_paper_ids)
@@ -53,7 +54,7 @@ def search_service(
         pr_scores=pr_scores,
         velocity_scores=velocity_scores,
     )
-    logger.info(f"Fused results: {len(fused_results)} papers")
+    logger.info(f"Fused results: {fused_results} papers")
 
     final_results = _fetch_display_details(
         fused_results[:limit]
@@ -74,8 +75,8 @@ def _fetch_scores(
         pr_scores = {}
         velocity_scores = {}
         for id in paper_ids:
-            paper=paper_repo.get_by_id(paper_id=id)
-            doc_id = paper.paper_id
+            paper=paper_repo.get_by_oa_id(oa_id=id)
+            doc_id = paper.openalex_id
             pr_scores[doc_id]= paper.pr_score
             velocity_scores[doc_id]= paper.velocity_score
         return pr_scores, velocity_scores
@@ -100,9 +101,10 @@ def _fetch_display_details(
         result =[]
         details = []
         for id in paper_ids: 
-            paper=paper_repo.get_by_id(paper_id=id)
+            paper=paper_repo.get_by_oa_id(oa_id=id)
+            if paper is None:
+                continue
             details.append({
-                "paper_id": paper.paper_id,
                 "openalex_id": paper.openalex_id,
                 "title": paper.title,
                 "abstract": paper.abstract,
@@ -111,7 +113,7 @@ def _fetch_display_details(
                 "citation_count": paper.citation_count,
                 "pr_score": float(paper.pr_score) if paper.pr_score else 0.0,
                 "velocity_score": float(paper.velocity_score) if paper.velocity_score else 0.0,
-                "score": score_map.get(paper.paper_id, 0),
+                "score": score_map.get(paper.openalex_id, 0),
             })
         return sorted(details, key=lambda x: x["score"], reverse=True)
     except Exception as e:

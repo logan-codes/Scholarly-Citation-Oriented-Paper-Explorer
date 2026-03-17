@@ -77,6 +77,7 @@ def fuse_results(
     pr_weight: float = 0.2,
     velocity_weight: float = 0.1,
 ) -> List[Dict[str, Any]]:
+
     weights = {
         "vector": vector_weight,
         "keyword": keyword_weight,
@@ -84,30 +85,31 @@ def fuse_results(
         "velocity": velocity_weight,
     }
 
-    results_by_source = {
-        "vector": vector_results,
-        "keyword": keyword_results,
-    }
+    # Create quick lookup maps
+    vector_map = {str(r["id"]): r.get("score", 0.0) for r in vector_results}
+    keyword_map = {str(r["id"]): r.get("score", 0.0) for r in keyword_results}
 
-    fused = weighted_fusion(results_by_source, weights)
+    # Collect all document ids
+    all_doc_ids = set(vector_map.keys()) | set(keyword_map.keys()) | set(pr_scores.keys()) | set(velocity_scores.keys())
 
     final_results = []
-    for doc_id, base_score in fused:
-        paper_id = doc_id
-        
-        pr = pr_scores.get(doc_id, 0)
-        vel = velocity_scores.get(doc_id, 0)
-        
-        combined = (
-            weights["vector"] * (vector_results[0]["score"] if vector_results and str(vector_results[0]["id"]) == doc_id else 0.5) +
-            weights["keyword"] * (keyword_results[0]["score"] if keyword_results and str(keyword_results[0]["id"]) == doc_id else 0.5) +
+
+    for doc_id in all_doc_ids:
+        vector_score = vector_map.get(doc_id, 0.0)
+        keyword_score = keyword_map.get(doc_id, 0.0)
+        pr = pr_scores.get(doc_id, 0.0)
+        vel = velocity_scores.get(doc_id, 0.0)
+
+        combined_score = (
+            weights["vector"] * vector_score +
+            weights["keyword"] * keyword_score +
             weights["pr"] * pr +
             weights["velocity"] * vel
         )
 
         final_results.append({
-            "id": paper_id,
-            "score": combined,
+            "id": doc_id,
+            "score": combined_score,
             "pr_score": pr,
             "velocity_score": vel,
         })
