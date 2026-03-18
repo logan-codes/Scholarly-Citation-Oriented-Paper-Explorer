@@ -5,6 +5,9 @@ class SearchRequest(BaseModel):
     query: str
     limit: int = 20
 
+class Author(BaseModel):
+    name: str
+    openalex_id: str | None = None
 
 class SearchResult(BaseModel):
     openalex_id: str
@@ -12,10 +15,9 @@ class SearchResult(BaseModel):
     abstract: Optional[str] = None
     venue: Optional[str] = None
     year: Optional[int] = None
-    fields: Optional[str] = None
-    authors: Optional[str] = None
+    fields: Optional[List[str]] = None
+    authors: Optional[List[Author]] = None
     citation_count: Optional[int] = 0
-    tags: List[str] = []
     contribution: str = ""
     relevancy_score:float = 0.0
     B25_score: float = 0.0

@@ -84,7 +84,7 @@ class PaperRepository:
 
             stmt = stmt.order_by(rank.desc()).limit(limit)
 
-            result = self.db.execute(stmt)
+            result = self.db.execute(stmt).mappings().all()
 
             return [
                 {"id": str(row["openalex_id"]), "score": row["bm25_score"]}

@@ -96,7 +96,7 @@ def _weighted_slope(yearly_counts: list[dict], decay: float = 0.7) -> float:
         return 0.0
 
     slope = (sw * sxy - sx * sy) / denom
-    return round(slope, 6)
+    return max(0.0,round(slope, 6))
 
 
 def calculate_citation_velocity() -> list[list]:

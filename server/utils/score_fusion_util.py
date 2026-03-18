@@ -86,7 +86,7 @@ def fuse_results(
     }
 
     # Create quick lookup maps
-    vector_map = {str(r["id"]): r.get("score", 0.0) for r in vector_results}
+    vector_map = {str(r["payload"]["paper id"]): r.get("score", 0.0) for r in vector_results}
     keyword_map = {str(r["id"]): r.get("score", 0.0) for r in keyword_results}
 
     # Collect all document ids
@@ -112,6 +112,8 @@ def fuse_results(
             "score": combined_score,
             "pr_score": pr,
             "velocity_score": vel,
+            "relevancy": vector_score,
+            "BM25": keyword_score,
         })
 
     return sorted(final_results, key=lambda x: x["score"], reverse=True)

@@ -165,6 +165,17 @@ def _iter_pages(
         # Be polite to the API (~ 10 req/s guideline)
         time.sleep(0.1)
 
+def get_data(
+        pub_year:int , 
+        limit: Optional[int] = DEFAULT_LIMIT,
+        per_page:int= DEFAULT_PER_PAGE,
+        skip_missing_abstract: bool=True,
+        skip_missing_doi: bool=True,
+        extra_filters: Optional[str]= None,
+        max_retries: int= DEFAULT_MAX_RETRIES
+    ) -> Iterator[Dict]:
+    pass
+
 def stream_data(
         pub_year:int , 
         limit: Optional[int] = DEFAULT_LIMIT,

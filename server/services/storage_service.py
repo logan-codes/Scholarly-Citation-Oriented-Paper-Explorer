@@ -144,27 +144,29 @@ def _store_qdrant(
 
 
 # Full pipeline orchestrator
-def storage_service(pub_year: int = 2026, limit: int = 100, per_page: int=200):
+def storage_service(pub_year: int = 2026, limit: int = 100, per_page: int=200, Stream: bool=True):
     logger.info("Storage Started (year=%d, per_page=%d)", pub_year, limit)
     count =0
     # stream api data
-    for paper in stream_data(pub_year=pub_year,limit=limit,per_page=per_page):
-        # Store in postgres
-        paper_id=_store_postgres(paper)
-        # Enriching the data
-        enrichment_result = _enrich(paper)
-        # Store in qdrant
-        title= paper.get("title")
-        abstract= paper.get("abstract")
-        payload={
-            "contribution":enrichment_result.contribution,
-            "year":paper.get("year"),
-            "fields":paper.get("fields"),
-            "open_access":paper.get("open_access")
-        }
-        _store_qdrant(paper_id,title,abstract,payload,enrichment_result)
-
-        count+=1
+    if Stream:
+        for paper in stream_data(pub_year=pub_year,limit=limit,per_page=per_page):
+            # Store in postgres
+            paper_id=_store_postgres(paper)
+            # Enriching the data
+            enrichment_result = _enrich(paper)
+            # Store in qdrant
+            title= paper.get("title")
+            abstract= paper.get("abstract")
+            payload={
+                "contribution":enrichment_result.contribution,
+                "year":paper.get("year"),
+                "fields":paper.get("fields"),
+                "open_access":paper.get("open_access")
+            }
+            _store_qdrant(paper_id,title,abstract,payload,enrichment_result)
+            count+=1
+    else:
+        pass
     # Calculating and updating pagerank and citation velocity in postgres
     logger.info("Computing PageRank & citation velocity")
     update_global_pr()

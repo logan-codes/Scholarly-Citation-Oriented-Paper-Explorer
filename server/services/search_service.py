@@ -42,7 +42,7 @@ def search_service(
     logger.info(f"Keyword search returned {len(keyword_results)} results")
 
     all_paper_ids = list(set(
-        [r for r in vector_candidate_ids] + [r["openalex_id"] for r in keyword_results]
+        [r for r in vector_candidate_ids] + [r["id"] for r in keyword_results]
     ))
 
     pr_scores, velocity_scores = _fetch_scores(all_paper_ids)
@@ -54,10 +54,13 @@ def search_service(
         pr_scores=pr_scores,
         velocity_scores=velocity_scores,
     )
-    logger.info(f"Fused results: {fused_results} papers")
+    logger.info(f"Fused results: {len(fused_results)} papers")
+
+    vector_payloads ={r["payload"]["paper id"]: r["payload"] for r in vector_results}
 
     final_results = _fetch_display_details(
-        fused_results[:limit]
+        fused_results[:limit],
+        vector_payloads=vector_payloads
     )
     logger.info(f"Search complete. Returning {len(final_results)} results")
 
@@ -88,13 +91,13 @@ def _fetch_scores(
 
 def _fetch_display_details(
     paper_results: List[Dict[str, Any]],
+    vector_payloads: Dict[str, Dict]={}
 ) -> List[Dict[str, Any]]:
     if not paper_results:
         return []
 
     paper_ids = [r["id"] for r in paper_results]
-    score_map = {r["id"]: r["score"] for r in paper_results}
-
+    score_map = {r["id"]: r for r in paper_results}
     session = SessionLocal()
     try:
         paper_repo=PaperRepository(session)
@@ -104,18 +107,24 @@ def _fetch_display_details(
             paper=paper_repo.get_by_oa_id(oa_id=id)
             if paper is None:
                 continue
+            payload = vector_payloads.get(paper.openalex_id, {})
             details.append({
                 "openalex_id": paper.openalex_id,
                 "title": paper.title,
                 "abstract": paper.abstract,
                 "venue": paper.venue,
                 "year": paper.year,
+                "fields": payload.get("fields") or paper.fields,
+                "authors":paper.authors,
+                "contribution": payload.get("contribution",""),
                 "citation_count": paper.citation_count,
+                "relevancy_score": score_map.get(paper.openalex_id,{}).get("relevancy",0.0),
+                "B25_score": score_map.get(paper.openalex_id,{}).get("BM25",0.0),
                 "pr_score": float(paper.pr_score) if paper.pr_score else 0.0,
                 "velocity_score": float(paper.velocity_score) if paper.velocity_score else 0.0,
-                "score": score_map.get(paper.openalex_id, 0),
+                "final_score": score_map.get(paper.openalex_id, {}).get("score",0.0),
             })
-        return sorted(details, key=lambda x: x["score"], reverse=True)
+        return sorted(details, key=lambda x: x["final_score"], reverse=True)
     except Exception as e:
         logger.error(f"Failed to fetch display details: {e}")
         return []
