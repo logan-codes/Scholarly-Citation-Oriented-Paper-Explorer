@@ -165,6 +165,24 @@ def _iter_pages(
         # Be polite to the API (~ 10 req/s guideline)
         time.sleep(0.1)
 
+def fetch_single_work(openalex_id: str) -> Optional[Dict]:
+    """Fetch a single work by its OpenAlex ID."""
+    # Ensure ID doesn't have the https prefix if passed that way
+    if openalex_id.startswith("https://api.openalex.org/works/"):
+        openalex_id = openalex_id.split("/")[-1]
+    
+    url = f"{BASE_URL}/{openalex_id}"
+    params = {"api_key": api_key} if api_key else {}
+    
+    try:
+        response = requests.get(url, params=params, timeout=30)
+        response.raise_for_status()
+        work = response.json()
+        return _parse_work(work)
+    except Exception as e:
+        logger.error(f"Failed to fetch single work {openalex_id}: {e}")
+        return None
+
 def get_data(
         pub_year:int , 
         limit: Optional[int] = DEFAULT_LIMIT,

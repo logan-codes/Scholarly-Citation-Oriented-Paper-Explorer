@@ -13,6 +13,9 @@ class Settings(BaseSettings):
 
     # Groq
     GROQ_API_KEY: str
+    
+    # Hugging Face
+    HF_HUB_OFFLINE: int
 
     class Config:
         env_file=".env"

@@ -67,6 +67,15 @@ def weighted_fusion(
     return sorted_docs
 
 
+def standardize_scores(scores: List[float], target_max: float = 100.0) -> List[float]:
+    if not scores:
+        return []
+    max_score = max(scores)
+    if max_score <= 0:
+        return [0.0] * len(scores)
+    return [(s / max_score) * target_max for s in scores]
+
+
 def fuse_results(
     vector_results: List[Dict[str, Any]],
     keyword_results: List[Dict[str, Any]],
@@ -85,35 +94,47 @@ def fuse_results(
         "velocity": velocity_weight,
     }
 
-    # Create quick lookup maps
-    vector_map = {str(r["payload"]["paper id"]): r.get("score", 0.0) for r in vector_results}
-    keyword_map = {str(r["id"]): r.get("score", 0.0) for r in keyword_results}
-
     # Collect all document ids
-    all_doc_ids = set(vector_map.keys()) | set(keyword_map.keys()) | set(pr_scores.keys()) | set(velocity_scores.keys())
+    vector_ids = [str(r["payload"]["paper id"]) for r in vector_results]
+    keyword_ids = [str(r["id"]) for r in keyword_results]
+    all_doc_ids = list(set(vector_ids) | set(keyword_ids) | set(pr_scores.keys()) | set(velocity_scores.keys()))
+
+    if not all_doc_ids:
+        return []
+
+    # Prepare score arrays for standardization
+    vector_raw = [next((r.get("score", 0.0) for r in vector_results if str(r["payload"]["paper id"]) == doc_id), 0.0) for doc_id in all_doc_ids]
+    keyword_raw = [next((r.get("score", 0.0) for r in keyword_results if str(r["id"]) == doc_id), 0.0) for doc_id in all_doc_ids]
+    pr_raw = [pr_scores.get(doc_id, 0.0) for doc_id in all_doc_ids]
+    velocity_raw = [velocity_scores.get(doc_id, 0.0) for doc_id in all_doc_ids]
+
+    # Standardize to 0-100
+    vector_std = standardize_scores(vector_raw)
+    keyword_std = standardize_scores(keyword_raw)
+    pr_std = standardize_scores(pr_raw)
+    velocity_std = standardize_scores(velocity_raw)
 
     final_results = []
-
-    for doc_id in all_doc_ids:
-        vector_score = vector_map.get(doc_id, 0.0)
-        keyword_score = keyword_map.get(doc_id, 0.0)
-        pr = pr_scores.get(doc_id, 0.0)
-        vel = velocity_scores.get(doc_id, 0.0)
+    for i, doc_id in enumerate(all_doc_ids):
+        v_s = vector_std[i]
+        k_s = keyword_std[i]
+        p_s = pr_std[i]
+        vel_s = velocity_std[i]
 
         combined_score = (
-            weights["vector"] * vector_score +
-            weights["keyword"] * keyword_score +
-            weights["pr"] * pr +
-            weights["velocity"] * vel
+            weights["vector"] * v_s +
+            weights["keyword"] * k_s +
+            weights["pr"] * p_s +
+            weights["velocity"] * vel_s
         )
 
         final_results.append({
             "id": doc_id,
-            "score": combined_score,
-            "pr_score": pr,
-            "velocity_score": vel,
-            "relevancy": vector_score,
-            "BM25": keyword_score,
+            "score": round(combined_score, 2),
+            "relevancy": round(v_s, 2),
+            "BM25": round(k_s, 2),
+            "pr_score": round(p_s, 2),
+            "velocity_score": round(vel_s, 2),
         })
 
     return sorted(final_results, key=lambda x: x["score"], reverse=True)

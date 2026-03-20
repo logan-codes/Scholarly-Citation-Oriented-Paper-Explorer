@@ -11,6 +11,7 @@ class Author(BaseModel):
 
 class SearchResult(BaseModel):
     openalex_id: str
+    doi: Optional[str] = None
     title: str
     abstract: Optional[str] = None
     venue: Optional[str] = None

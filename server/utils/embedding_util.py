@@ -1,7 +1,10 @@
+import os
+from sentence_transformers import SentenceTransformer
 from core.config import settings
 from core.logger import logger
 
 EMBED_BATCH_SIZE = 32
+MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
 
 _minilm_model = None
 _specter2_model = None
@@ -10,18 +13,28 @@ _specter2_model = None
 def get_minilm():
     global _minilm_model
     if _minilm_model is None:
-        from sentence_transformers import SentenceTransformer
         logger.info("Loading MiniLM model...")
-        _minilm_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+        local_path = os.path.join(MODELS_DIR, "all-MiniLM-L6-v2")
+        if os.path.exists(local_path):
+            logger.info(f"Loading MiniLM from local path: {local_path}")
+            _minilm_model = SentenceTransformer(local_path)
+        else:
+            logger.info("Local MiniLM not found, downloading from HF...")
+            _minilm_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
     return _minilm_model
 
 
 def get_specter2():
     global _specter2_model
     if _specter2_model is None:
-        from sentence_transformers import SentenceTransformer
         logger.info("Loading SPECTER2 model...")
-        _specter2_model = SentenceTransformer("allenai/specter2_base")
+        local_path = os.path.join(MODELS_DIR, "specter2_base")
+        if os.path.exists(local_path):
+            logger.info(f"Loading SPECTER2 from local path: {local_path}")
+            _specter2_model = SentenceTransformer(local_path)
+        else:
+            logger.info("Local SPECTER2 not found, downloading from HF...")
+            _specter2_model = SentenceTransformer("allenai/specter2_base")
     return _specter2_model
 
 

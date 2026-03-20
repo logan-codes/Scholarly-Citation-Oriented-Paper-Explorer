@@ -110,6 +110,7 @@ def _fetch_display_details(
             payload = vector_payloads.get(paper.openalex_id, {})
             details.append({
                 "openalex_id": paper.openalex_id,
+                "doi": paper.doi,
                 "title": paper.title,
                 "abstract": paper.abstract,
                 "venue": paper.venue,
@@ -120,8 +121,8 @@ def _fetch_display_details(
                 "citation_count": paper.citation_count,
                 "relevancy_score": score_map.get(paper.openalex_id,{}).get("relevancy",0.0),
                 "B25_score": score_map.get(paper.openalex_id,{}).get("BM25",0.0),
-                "pr_score": float(paper.pr_score) if paper.pr_score else 0.0,
-                "velocity_score": float(paper.velocity_score) if paper.velocity_score else 0.0,
+                "pr_score": score_map.get(paper.openalex_id,{}).get("pr_score",0.0),
+                "velocity_score": score_map.get(paper.openalex_id,{}).get("velocity_score",0.0),
                 "final_score": score_map.get(paper.openalex_id, {}).get("score",0.0),
             })
         return sorted(details, key=lambda x: x["final_score"], reverse=True)

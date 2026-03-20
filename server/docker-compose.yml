@@ -9,11 +9,9 @@ services:
       - "8000:8000"
     environment:
       - POSTGRES_URL=postgresql://admin:admin123@postgres:5432/appdb
-      - REDIS_URL=redis://redis:6379
       - QDRANT_URL=http://qdrant:6333
     depends_on:
       - postgres
-      - redis
       - qdrant
     volumes:
       - ./app.log:/app/app.log

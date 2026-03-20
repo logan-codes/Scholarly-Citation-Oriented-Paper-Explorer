@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
 
 void main() {
@@ -187,14 +189,6 @@ class _MainScreenState extends State<MainScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
   List<dynamic> _searchResults = [];
-  String _selectedCategory = 'All';
-  String _selectedSort = 'Relevance';
-
-  final List<String> _categories = [
-    'All', 'Machine Learning', 'Neuroscience', 'Physics', 'Biology', 'Mathematics', 'Computer Science'
-  ];
-
-  final List<String> _sortOptions = ['Relevance', 'Trust Score', 'Most Cited', 'Newest'];
 
   Future<void> searchPapers(String query, {int limit = 100}) async {
     if (query.trim().isEmpty) return;
@@ -254,9 +248,9 @@ class _MainScreenState extends State<MainScreen> {
               SliverToBoxAdapter(
                 child: _buildHeroSection(),
               ),
-              SliverToBoxAdapter(
-                child: _buildControlsBar(),
-              ),
+              // SliverToBoxAdapter(
+              //   child: _buildControlsBar(),
+              // ),
               if (_isLoading)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator(color: Color(0xFFF99015))),
@@ -308,27 +302,9 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
       ),
-      actions: [
-        _buildNavButton('Explore'),
-        _buildNavButton('Trending'),
-        _buildNavButton('About'),
-        const SizedBox(width: 32),
-      ],
     );
   }
 
-  Widget _buildNavButton(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: TextButton(
-        onPressed: () {},
-        child: Text(
-          text,
-          style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-        ),
-      ),
-    );
-  }
 
   Widget _buildHeroSection() {
     return Container(
@@ -399,121 +375,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildControlsBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000), // Match approx content width
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              bool isDesktop = constraints.maxWidth > 800;
-              
-              if (isDesktop) {
-                 return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: _categories.map((c) => _buildCategoryBadge(c)).toList(),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.swap_vert, color: Color(0xFF5A6270), size: 18), // Sort icon
-                        const SizedBox(width: 8),
-                        ..._sortOptions.map((s) => _buildSortBadge(s)),
-                      ],
-                    )
-                  ],
-                );
-              }
-              
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _categories.map((c) => _buildCategoryBadge(c)).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      const Icon(Icons.swap_vert, color: Color(0xFF5A6270), size: 18),
-                      const SizedBox(width: 4),
-                      ..._sortOptions.map((s) => _buildSortBadge(s)),
-                    ],
-                  )
-                ],
-              );
-            },
-          )
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryBadge(String category) {
-    bool isSelected = _selectedCategory == category;
-    return InkWell(
-      onTap: () => setState(() => _selectedCategory = category),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF99015) : const Color(0xFF242936),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          category,
-          style: TextStyle(
-            color: isSelected ? const Color(0xFF0D0F16) : const Color(0xFFD1D5DB),
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSortBadge(String sort) {
-    bool isSelected = _selectedSort == sort;
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: InkWell(
-        onTap: () => setState(() => _selectedSort = sort),
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFF99015) : const Color(0xFF242936),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-               color: isSelected ? Colors.transparent : Colors.transparent
-            )
-          ),
-          child: Text(
-            sort,
-            style: TextStyle(
-              color: isSelected ? const Color(0xFF0D0F16) : const Color(0xFFD1D5DB),
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Removed unused controls bar
 }
 
 class PaperCard extends StatefulWidget {
@@ -531,27 +393,29 @@ class _PaperCardState extends State<PaperCard> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.paper["title"] ?? "No Title";
-    
-    // Extract authors safely
     final rawAuthors = widget.paper["authors"];
-    String authors = "Unknown Authors";
+    String authorsStr = "Unknown Authors";
     if (rawAuthors is List) {
-      authors = rawAuthors.join(", ");
+      authorsStr = rawAuthors
+          .map((a) => a is Map ? (a["name"] ?? "Unknown") : a.toString())
+          .join(", ");
     } else if (rawAuthors is String) {
-      authors = rawAuthors;
+      authorsStr = rawAuthors;
     }
-    
+
     final venue = widget.paper["venue"] ?? "Various";
     final year = widget.paper["year"]?.toString() ?? "N/A";
     final citationCount = widget.paper["citation_count"]?.toString() ?? "0";
     final abstract = widget.paper["abstract"] ?? "No abstract available.";
-    
-    final displayAuthors = authors.length > 100 ? '${authors.substring(0, 100)}...' : authors;
+    final contribution = widget.paper["contribution"] ?? "";
+    final doi = widget.paper["doi"] ?? "";
 
-    // Simulate different categories based on index just for visuals
-    final cats = ['Machine Learning', 'Computer Science', 'Biology', 'Physics'];
-    final category = cats[widget.index % cats.length];
+    final displayAuthors =
+        authorsStr.length > 100 ? '${authorsStr.substring(0, 100)}...' : authorsStr;
+
+    final List<dynamic> fields = widget.paper["fields"] ?? [];
+    final double trustScore = (widget.paper["final_score"] ?? 0.0) * 100;
+    final String trustScoreStr = trustScore.toStringAsFixed(1) + "%";
 
     return Center(
       child: Container(
@@ -565,7 +429,7 @@ class _PaperCardState extends State<PaperCard> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => PaperDetailPage(paper: widget.paper, category: category),
+                  builder: (context) => PaperDetailPage(paper: widget.paper),
                 ),
               );
             },
@@ -585,86 +449,106 @@ class _PaperCardState extends State<PaperCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Number column
-            SizedBox(
-              width: 40,
-              child: Text(
-                '${widget.index + 1}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF374151), // Dark gray
-                ),
-              ),
-            ),
-            
-            // Main Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Category tag top
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF242936),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                  SizedBox(
+                    width: 40,
                     child: Text(
-                      category,
-                      style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 11, fontWeight: FontWeight.w500),
+                      '${widget.index + 1}',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF374151), // Dark gray
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  
-                  // Title
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+
+                  // Main Content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category tags top
+                        if (fields.isNotEmpty)
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: fields.take(3).map((f) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF242936),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                f.toString(),
+                                style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 10, fontWeight: FontWeight.w500),
+                              ),
+                            )).toList(),
+                          ),
+                        const SizedBox(height: 12),
+
+                        // Title
+                        Text(
+                          widget.paper['title'] ?? 'No Title',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Authors
+                        Text(
+                          displayAuthors,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF9CA3AF), // Gray 400
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Abstract snippet
+                        Text(
+                          abstract,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6B7280), // Gray 500
+                            height: 1.5,
+                          ),
+                        ),
+                        
+                        if (contribution.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            "Contribution: $contribution",
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFFF99015),
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                        
+                        const SizedBox(height: 16),
+
+                        // Bottom row metrics
+                        Wrap(
+                          spacing: 16,
+                          runSpacing: 8,
+                            children: [
+                              _buildMetric(Icons.calendar_today, year),
+                              _buildMetric(Icons.format_quote, citationCount),
+                              _buildMetric(Icons.auto_stories, venue),
+                              if (doi.isNotEmpty) _buildMetric(Icons.link, doi.toString().replaceFirst("https://doi.org/", "")),
+                              _buildTrustScore(trustScoreStr),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  
-                  // Authors
-                  Text(
-                    displayAuthors,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF9CA3AF), // Gray 400
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Abstract snippet
-                  Text(
-                    abstract,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6B7280), // Gray 500
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Bottom row metrics
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 8,
-                    children: [
-                      _buildMetric(Icons.calendar_today, year),
-                      _buildMetric(Icons.format_quote, citationCount),
-                      _buildMetric(Icons.auto_stories, venue),
-                       // Added Trust Score manually to emulate the screenshot
-                      _buildTrustScore('97%'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             
             // Action Buttons (Right)
             if (MediaQuery.of(context).size.width > 600) ...[
@@ -673,7 +557,22 @@ class _PaperCardState extends State<PaperCard> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      if (doi.isNotEmpty) {
+                        final url = doi.toString().startsWith("http") ? doi.toString() : "https://doi.org/$doi";
+                        Clipboard.setData(ClipboardData(text: url));
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Copied DOI URL", textAlign: TextAlign.center),
+                            duration: Duration(seconds: 1),
+                            behavior: SnackBarBehavior.floating,
+                            width: 180,
+                          ),
+                        );
+                        launchUrl(Uri.parse(url));
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFF99015),
                       foregroundColor: const Color(0xFF0D0F16),
@@ -682,19 +581,6 @@ class _PaperCardState extends State<PaperCard> {
                     ),
                     icon: const Icon(Icons.open_in_new, size: 16),
                     label: const Text('Source', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2B303B),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.download, size: 16),
-                    label: const Text('PDF'),
                   ),
                 ],
               )
@@ -792,28 +678,43 @@ class NetworkBackgroundPainter extends CustomPainter {
 
 class PaperDetailPage extends StatelessWidget {
   final dynamic paper;
-  final String category;
 
-  const PaperDetailPage({super.key, required this.paper, required this.category});
+  const PaperDetailPage({super.key, required this.paper});
 
   @override
   Widget build(BuildContext context) {
     final title = paper["title"] ?? "No Title";
-    
+
     // Extract authors safely
     final rawAuthors = paper["authors"];
-    String authors = "Unknown Authors";
+    final List<Map<String, dynamic>> authors = [];
     if (rawAuthors is List) {
-      authors = rawAuthors.join(", ");
-    } else if (rawAuthors is String) {
-      authors = rawAuthors;
+      for (var a in rawAuthors) {
+        if (a is Map) {
+          authors.add({
+            "name": a["name"] ?? "Unknown",
+            "openalex_id": a["openalex_id"] ?? "N/A",
+          });
+        }
+      }
     }
-    
+
     final venue = paper["venue"] ?? "Various";
     final year = paper["year"]?.toString() ?? "N/A";
     final citationCount = paper["citation_count"]?.toString() ?? "0";
     final abstract = paper["abstract"] ?? "No abstract available.";
-    
+    final contribution = paper["contribution"] ?? "";
+    final List<dynamic> fields = paper["fields"] ?? [];
+    final doi = paper["doi"] ?? "";
+
+    final double trustScoreValue = (paper["final_score"] ?? 0.0) * 100;
+    final String trustScoreStr = trustScoreValue.toStringAsFixed(1) + "%";
+
+    final double relevancyScore = paper["relevancy_score"] ?? 0.0;
+    final double bm25Score = paper["B25_score"] ?? 0.0;
+    final double prScore = paper["pr_score"] ?? 0.0;
+    final double velocityScore = paper["velocity_score"] ?? 0.0;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F16),
       appBar: AppBar(
@@ -823,6 +724,7 @@ class PaperDetailPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        title: const Text('Paper Details', style: TextStyle(color: Colors.white, fontSize: 18)),
       ),
       body: Stack(
         children: [
@@ -842,17 +744,22 @@ class PaperDetailPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF242936),
-                        borderRadius: BorderRadius.circular(16),
+                    if (fields.isNotEmpty)
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: fields.map((f) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF242936),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            f.toString(),
+                            style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 11, fontWeight: FontWeight.w500),
+                          ),
+                        )).toList(),
                       ),
-                      child: Text(
-                        category,
-                        style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 11, fontWeight: FontWeight.w500),
-                      ),
-                    ),
                     const SizedBox(height: 16),
                     Text(
                       title,
@@ -864,14 +771,6 @@ class PaperDetailPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      authors,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
                     Wrap(
                       spacing: 24,
                       runSpacing: 12,
@@ -879,10 +778,91 @@ class PaperDetailPage extends StatelessWidget {
                         _DetailMetric(icon: Icons.calendar_today, label: 'Year', value: year),
                         _DetailMetric(icon: Icons.format_quote, label: 'Citations', value: citationCount),
                         _DetailMetric(icon: Icons.auto_stories, label: 'Venue', value: venue),
-                        const _DetailMetric(icon: Icons.verified_user_outlined, label: 'Trust Score', value: '97%', color: Color(0xFF10B981)),
+                        if (doi.isNotEmpty) _DetailMetric(icon: Icons.link, label: 'DOI', value: doi.toString().replaceFirst("https://doi.org/", "")),
+                        _DetailMetric(icon: Icons.verified_user_outlined, label: 'Trust Score', value: trustScoreStr, color: const Color(0xFF10B981)),
                       ],
                     ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        if (doi.isNotEmpty) {
+                          final url = doi.toString().startsWith("http") ? doi.toString() : "https://doi.org/$doi";
+                          Clipboard.setData(ClipboardData(text: url));
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Copied DOI URL", textAlign: TextAlign.center),
+                              duration: Duration(seconds: 1),
+                              behavior: SnackBarBehavior.floating,
+                              width: 180,
+                            ),
+                          );
+                          launchUrl(Uri.parse(url));
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF99015),
+                        foregroundColor: const Color(0xFF0D0F16),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('View Source', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                    const SizedBox(height: 32),
+                    
+                    // Detailed Scores Section
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF161A23),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF2A2E39)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Ranking Metrics',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _ScoreInfo(label: 'Relevancy', value: relevancyScore.toStringAsFixed(3)),
+                              _ScoreInfo(label: 'BM25', value: bm25Score.toStringAsFixed(2)),
+                              _ScoreInfo(label: 'PageRank', value: prScore.toStringAsFixed(4)),
+                              _ScoreInfo(label: 'Velocity', value: velocityScore.toStringAsFixed(2)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    
                     const SizedBox(height: 48),
+                    if (contribution.isNotEmpty) ...[
+                      const Text(
+                        'Key Contribution',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        contribution,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFFF99015),
+                          height: 1.6,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                    
                     const Text(
                       'Abstract',
                       style: TextStyle(
@@ -899,6 +879,45 @@ class PaperDetailPage extends StatelessWidget {
                         color: Color(0xFFD1D5DB),
                         height: 1.6,
                       ),
+                    ),
+                    const SizedBox(height: 48),
+                    const Text(
+                      'Authors',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: authors.map((author) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF161A23),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF2A2E39)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              author["name"],
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Author ID: ${author["openalex_id"]}",
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )).toList(),
                     ),
                     const SizedBox(height: 48),
                     const Text(
@@ -973,3 +992,27 @@ class _DetailMetric extends StatelessWidget {
   }
 }
 
+class _ScoreInfo extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ScoreInfo({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+      ],
+    );
+  }
+}
