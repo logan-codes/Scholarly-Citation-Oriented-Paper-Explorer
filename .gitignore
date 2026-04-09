@@ -21,3 +21,6 @@ build/
 
 #env files
 .env
+
+# model files
+models

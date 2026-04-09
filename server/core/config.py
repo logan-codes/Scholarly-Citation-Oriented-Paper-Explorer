@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     # Hugging Face
     HF_HUB_OFFLINE: int
 
+    # Debug
+    DEBUG: int
+
     class Config:
         env_file=".env"
 

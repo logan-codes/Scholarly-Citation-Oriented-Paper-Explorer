@@ -39,15 +39,15 @@ def get_specter2():
 
 
 def embed_title(title: str) -> list[float]:
-    return get_minilm().encode([title])[0].tolist()
+    return get_minilm().encode([title or ""])[0].tolist()
 
 
 def embed_abstract(abstract: str) -> list[float]:
-    return get_specter2().encode([abstract])[0].tolist()
+    return get_specter2().encode([abstract or ""])[0].tolist()
 
 
 def embed_contribution(contribution: str) -> list[float]:
-    return get_specter2().encode([contribution])[0].tolist()
+    return get_specter2().encode([contribution or ""])[0].tolist()
 
 
 def embed_query(query: str) -> dict[str, list[float]]:

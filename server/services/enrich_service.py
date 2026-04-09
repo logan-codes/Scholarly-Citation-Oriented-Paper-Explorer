@@ -143,7 +143,7 @@ def enrich_paper(
 
     except Exception as e:
         # Broad catch — pipeline must not crash on a single paper
-        logger.exception("Unexpected error enriching '%s': %s", title[:60], str(e))
+        logger.exception("Unexpected error enriching '%s': %s", title, str(e))
         return EnrichmentResult(
             tags=[],
             contribution=_extractive_contribution(abstract),

@@ -6,8 +6,11 @@ from contextlib import asynccontextmanager
 from db.postgres_db import init_db, clear_db
 from db.qdrant_db import QdrantDB
 from core.logger import get_logger
+from core.config import settings
 import time
 import uuid
+from utils.download_models import download_models
+from utils.seed_db import Seeder
 
 logger = get_logger(__name__)
 
@@ -16,14 +19,22 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Starting application")
     
-    # init_db()
-    # qdrant = QdrantDB()
-    # qdrant.create_collection()
+    init_db()
+    try:
+        qdrant = QdrantDB()
+        qdrant.create_collection()
+    except Exception as e:
+        logger.error(f"Failed to create Qdrant collection or Collection already exist: {e}")
+    
+    # download_models()
+    seeder=Seeder()
+    seeder.seed()
     
     yield
     
-    # clear_db()
-    # qdrant.delete_collection()
+    if settings.DEBUG:
+        clear_db()
+        qdrant.delete_collection()
     logger.info("Shutting down application")
 
 app = FastAPI(lifespan=lifespan)

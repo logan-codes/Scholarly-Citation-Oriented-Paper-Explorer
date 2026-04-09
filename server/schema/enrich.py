@@ -23,7 +23,7 @@ Abstract:
 
 Return ONLY valid JSON. No preamble, no markdown, no explanation.
 
-"tags": "<one word, max {tags_max} words>",
+"tags": ["<keyword1>", "<keyword2>", ...],  (array of strings, max {tags_max} total keywords)
 "contribution": "<core technical claim only, max {contrib_max} words>"
 
 """

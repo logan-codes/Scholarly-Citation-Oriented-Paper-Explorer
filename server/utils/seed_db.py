@@ -5,6 +5,8 @@ import uuid
 from collections import deque
 from typing import List, Set, Dict
 
+from services.pagerank_service import update_global_pr, update_citation_velocity
+
 # Add parent directory to sys.path to allow importing from server
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -24,11 +26,10 @@ logger = get_logger("seed_db")
 
 # Seed IDs (Attention, ResNet, BERT, GANs, ImageNet, GPT-3, Adam)
 SEED_IDS = [
-    "W2741809807", "W2755957008", "W2818903334", "W2049079997",
-    "W2116016186", "W3010079919", "W2137119036"
+    "W2626778328","W2963403868","W2950983510","W2238420396","W2136827523","W3098569943","W2963960098"
 ]
 
-TARGET_COUNT = 100
+TARGET_COUNT = 1000
 
 class Seeder:
     def __init__(self):
@@ -38,7 +39,7 @@ class Seeder:
         self.qdrant = QdrantDB()
         
         # Initialize LLM for enrichment
-        api_key = os.getenv("GROQ_API_KEY")
+        api_key = settings.GROQ_API_KEY
         if api_key:
             self.llm = ChatGroq(model=GROQ_MODEL, temperature=0.1, groq_api_key=api_key)
         else:
@@ -71,7 +72,7 @@ class Seeder:
                     # Let's check api_harvest_service parse_work output.
                     pass 
                 processed_ids.add(oa_id)
-                # count += 1 # We count it as processed
+                count += 1 # We count it as processed
                 continue
 
             logger.info(f"Fetching paper {oa_id}... ({count+1}/{TARGET_COUNT})")
@@ -79,8 +80,13 @@ class Seeder:
             if not paper_data:
                 continue
 
+            if not paper_data.get("title"):
+                logger.warning(f"Paper {oa_id} has no title, skipping.")
+                processed_ids.add(oa_id)
+                continue
+
             # 1. Enrich (Tags & Contribution)
-            logger.info(f"Enriching: {paper_data['title'][:60]}...")
+            logger.info(f"Enriching: {paper_data['title']}...")
             enrichment = enrich_paper(
                 llm=self.llm,
                 abstract=paper_data.get("abstract", ""),
@@ -88,7 +94,7 @@ class Seeder:
                 rate_limit_sleep=True if self.llm else False
             )
             
-            paper_data["contribution"] = enrichment.contribution
+            contribution_text = enrichment.contribution
             # Note: tags are currently not in our Paper model but could be useful for fields
             if enrichment.tags:
                 paper_data["fields"] = list(set((paper_data["fields"] or []) + enrichment.tags))
@@ -97,7 +103,7 @@ class Seeder:
             logger.info("Generating embeddings...")
             title_vec = embed_title(paper_data["title"])
             abstract_vec = embed_abstract(paper_data["abstract"] or "")
-            contrib_vec = embed_contribution(paper_data["contribution"])
+            contrib_vec = embed_contribution(contribution_text)
 
             # 3. Save to Postgres
             refs = paper_data.pop("referenced_works", [])
@@ -113,7 +119,7 @@ class Seeder:
                     abstract_vector=abstract_vec,
                     contribution_vector=contrib_vec,
                     payload={
-                        "contribution": paper_data["contribution"],
+                        "contribution": contribution_text,
                         "year": paper_data["year"],
                         "fields": paper_data["fields"],
                         "open_access": paper_data["open_access"]
@@ -137,7 +143,11 @@ class Seeder:
             except Exception as e:
                 logger.error(f"Failed to process paper {oa_id}: {e}")
                 self.session.rollback()
-
+        logger.info("Computing PageRank & citation velocity")
+        update_global_pr()
+        update_citation_velocity()
+        logger.info("Ranking scores updated")
+        logger.info("Storage complete")
         logger.info(f"Seed process completed. Total papers added: {count}")
 
     def __del__(self):

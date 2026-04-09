@@ -9,6 +9,7 @@ logger=get_logger(__name__)
 api_key = settings.OPEN_ALEX_API_KEY
 
 BASE_URL = "https://api.openalex.org/works"
+FETCH_URL = "https://api.openalex.org/works?filter=openalex_id:"
 DEFAULT_PER_PAGE = 200          # OpenAlex max per page
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_BACKOFF_SEC = 2         # doubles on each retry
@@ -168,7 +169,7 @@ def _iter_pages(
 def fetch_single_work(openalex_id: str) -> Optional[Dict]:
     """Fetch a single work by its OpenAlex ID."""
     # Ensure ID doesn't have the https prefix if passed that way
-    if openalex_id.startswith("https://api.openalex.org/works/"):
+    if openalex_id.startswith("https://api.openalex.org/"):
         openalex_id = openalex_id.split("/")[-1]
     
     url = f"{BASE_URL}/{openalex_id}"
