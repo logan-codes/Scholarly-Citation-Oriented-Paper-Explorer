@@ -414,7 +414,7 @@ class _PaperCardState extends State<PaperCard> {
         authorsStr.length > 100 ? '${authorsStr.substring(0, 100)}...' : authorsStr;
 
     final List<dynamic> fields = widget.paper["fields"] ?? [];
-    final double trustScore = (widget.paper["final_score"] ?? 0.0) * 100;
+    final double trustScore = (widget.paper["final_score"] ?? 0.0).toDouble();
     final String trustScoreStr = trustScore.toStringAsFixed(1) + "%";
 
     return Center(
@@ -707,7 +707,7 @@ class PaperDetailPage extends StatelessWidget {
     final List<dynamic> fields = paper["fields"] ?? [];
     final doi = paper["doi"] ?? "";
 
-    final double trustScoreValue = (paper["final_score"] ?? 0.0) * 100;
+    final double trustScoreValue = (paper["final_score"] ?? 0.0).toDouble();
     final String trustScoreStr = trustScoreValue.toStringAsFixed(1) + "%";
 
     final double relevancyScore = paper["relevancy_score"] ?? 0.0;

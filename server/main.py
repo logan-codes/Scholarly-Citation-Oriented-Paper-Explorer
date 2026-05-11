@@ -27,8 +27,8 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to create Qdrant collection or Collection already exist: {e}")
     
     # download_models()
-    seeder=Seeder()
-    seeder.seed()
+    # seeder=Seeder()
+    # seeder.seed()
     
     yield
     
