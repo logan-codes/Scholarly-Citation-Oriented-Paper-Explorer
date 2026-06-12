@@ -112,4 +112,4 @@ flutter run
 4.  **Analyze**: Click on any paper to view detailed metrics like Relevancy, BM25, PageRank, and overall Trust Score.
 
 ---
-*Built with ❤️ by [logan](https://github.com/logan-codes) and [Logesh](https://linkedin.com/in/logeshnainamalai)*
+*Built with ❤️ by [logan](https://github.com/logan-codes) and [Logesh](https://github.com/loki0707)*
